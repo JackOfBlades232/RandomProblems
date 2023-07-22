@@ -5,3 +5,5 @@
 *.o
 
 __pycache__
+
+*.dSYM

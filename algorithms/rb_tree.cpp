@@ -3,7 +3,8 @@
 #include <stdlib.h>
 
 enum NodeColor { red, black };
-#define IS_RED(_node) (_node && _node->color == red)
+#define IS_RED(_node) ((_node) && (_node)->color == red)
+#define IS_BLACK(_node) (!IS_RED(_node))
 
 template <typename T>
 struct RBTreeNode {
@@ -19,7 +20,7 @@ template <typename T>
 RBTreeNode<T> *RBTreeNode<T>::rotate_left()
 {
     if (!right)
-        return nullptr; // @TODO: error
+        return nullptr;
 
     right->parent = parent;
     if (parent) {
@@ -44,7 +45,7 @@ template <typename T>
 RBTreeNode<T> *RBTreeNode<T>::rotate_right()
 {
     if (!left)
-        return nullptr; // @TODO: error
+        return nullptr;
 
     left->parent = parent;
     if (parent) {
@@ -73,7 +74,7 @@ private:
     RBTreeNode<T> **m_search_ptr(T key, RBTreeNode<T> **parent_out);
     void m_remove_one_child(RBTreeNode<T> **nodep);
     void m_fix_after_add(RBTreeNode<T> *node);
-    void m_fix_after_remove(RBTreeNode<T> *node);
+    void m_fix_after_remove(RBTreeNode<T> *node, RBTreeNode<T> *parent);
     void m_print_subtree(RBTreeNode<T> *root, int depth);
 
 public:
@@ -157,11 +158,66 @@ void RBTree<T>::m_fix_after_add(RBTreeNode<T> *node)
 }
 
 template <typename T>
-void RBTree<T>::m_fix_after_remove(RBTreeNode<T> *node)
+void RBTree<T>::m_fix_after_remove(RBTreeNode<T> *node, RBTreeNode<T> *parent)
 {
-    if (!node)
+    if (!node && !parent)
         return;
 
+    while (node != m_root && IS_BLACK(node)) {
+        RBTreeNode<T> *p = node ? node->parent : parent;
+        
+        if (node == p->left) {
+            RBTreeNode<T> *b = p->right;
+            if (b->color == red) {
+                b->color = black;
+                p->color = red;
+                p->rotate_left();
+                b = p->right;
+            }
+            if (IS_BLACK(b->left) && IS_BLACK(b->right)) {
+                b->color = red;
+                node = p;
+            } else {
+                if (IS_BLACK(b->right)) {
+                    b->color = red;
+                    b->left->color = black;
+                    b->rotate_right();
+                    b = p->right;
+                }
+                b->color = p->color;
+                p->color = black;
+                b->right->color = black;
+                p->rotate_left();
+                node = m_root;
+            }
+        } else {
+            RBTreeNode<T> *b = p->left;
+            if (b->color == red) {
+                b->color = black;
+                p->color = red;
+                p->rotate_right();
+                b = p->left;
+            }
+            if (IS_BLACK(b->left) && IS_BLACK(b->right)) {
+                b->color = red;
+                node = p;
+            } else {
+                if (IS_BLACK(b->left)) {
+                    b->color = red;
+                    b->right->color = black;
+                    b->rotate_left();
+                    b = p->left;
+                }
+                b->color = p->color;
+                p->color = black;
+                b->left->color = black;
+                p->rotate_right();
+                node = m_root;
+            }
+        }
+    }
+
+    node->color = black;
 }
 
 template <typename T>
@@ -231,6 +287,8 @@ void RBTree<T>::remove(T key)
     if (!*nodep)
         return;
 
+    NodeColor deleted_node_color = (*nodep)->color;
+
     if (!(*nodep)->right || !(*nodep)->left)
         m_remove_one_child(nodep);
     else {
@@ -242,12 +300,14 @@ void RBTree<T>::remove(T key)
         node->key = repl->key;
         node = repl;
         parent = node->parent;
+        deleted_node_color = node->color;
         nodep = node == parent->right ? &parent->right : &parent->left;
 
         m_remove_one_child(nodep);
     }
 
-    m_fix_after_remove(*nodep);
+    if (deleted_node_color == black)
+        m_fix_after_remove(*nodep, parent);
 }
 
 template <typename T>
@@ -269,8 +329,8 @@ int main()
             std::cin >> n;
             if (c == 'a')
                 tree.add(n);
-            /* else if (c == 'r')
-                tree.remove(n); */
+            else if (c == 'r')
+                tree.remove(n);
             else if (c == 's')
                 printf(tree.search(n) ? "Found\n" : "Not found\n");
         }

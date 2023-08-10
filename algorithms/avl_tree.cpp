@@ -37,7 +37,7 @@ template <typename T>
 AVLTreeNode<T> *AVLTreeNode<T>::rotate_left()
 {
     if (!right)
-        return nullptr; // @TODO: error
+        return nullptr;
 
     right->parent = parent;
     if (parent) {
@@ -65,7 +65,7 @@ template <typename T>
 AVLTreeNode<T> *AVLTreeNode<T>::rotate_right()
 {
     if (!left)
-        return nullptr; // @TODO: error
+        return nullptr;
 
     left->parent = parent;
     if (parent) {
@@ -93,7 +93,7 @@ template <typename T>
 AVLTreeNode<T> *AVLTreeNode<T>::rotate_right_left()
 {
     if (!right || !right->left)
-        return nullptr; // @TODO: error
+        return nullptr;
 
     right->rotate_right();
     return rotate_left();
@@ -103,7 +103,7 @@ template <typename T>
 AVLTreeNode<T> *AVLTreeNode<T>::rotate_left_right()
 {
     if (!left || !left->right)
-        return nullptr; // @TODO: error
+        return nullptr;
 
     left->rotate_left();
     return rotate_right();

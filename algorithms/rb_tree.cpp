@@ -12,15 +12,15 @@ struct RBTreeNode {
     NodeColor color;
     RBTreeNode<T> *left, *right, *parent;
 
-    RBTreeNode<T> *rotate_left();
-    RBTreeNode<T> *rotate_right();
+    void rotate_left();
+    void rotate_right();
 };
 
 template <typename T>
-RBTreeNode<T> *RBTreeNode<T>::rotate_left()
+void RBTreeNode<T>::rotate_left()
 {
     if (!right)
-        return nullptr;
+        return;
 
     right->parent = parent;
     if (parent) {
@@ -37,15 +37,13 @@ RBTreeNode<T> *RBTreeNode<T>::rotate_left()
     right = tmp;
     if (tmp)
         tmp->parent = this;
-
-    return parent;
 }
 
 template <typename T>
-RBTreeNode<T> *RBTreeNode<T>::rotate_right()
+void RBTreeNode<T>::rotate_right()
 {
     if (!left)
-        return nullptr;
+        return;
 
     left->parent = parent;
     if (parent) {
@@ -62,8 +60,6 @@ RBTreeNode<T> *RBTreeNode<T>::rotate_right()
     left = tmp;
     if (tmp)
         tmp->parent = this;
-
-    return parent;
 }
 
 template <typename T>
@@ -73,6 +69,8 @@ private:
 
     RBTreeNode<T> **m_search_ptr(T key, RBTreeNode<T> **parent_out);
     void m_remove_one_child(RBTreeNode<T> **nodep);
+    void m_rotate_left(RBTreeNode<T> *pivot);
+    void m_rotate_right(RBTreeNode<T> *pivot);
     void m_fix_after_add(RBTreeNode<T> *node);
     void m_fix_after_remove(RBTreeNode<T> *node, RBTreeNode<T> *parent);
     void m_print_subtree(RBTreeNode<T> *root, int depth);
@@ -102,6 +100,22 @@ RBTreeNode<T> **RBTree<T>::m_search_ptr(T key, RBTreeNode<T> **parent_out)
 }
 
 template <typename T>
+void RBTree<T>::m_rotate_left(RBTreeNode<T> *pivot)
+{
+    pivot->rotate_left();
+    if (!pivot->parent->parent)
+        m_root = pivot->parent;
+}
+
+template <typename T>
+void RBTree<T>::m_rotate_right(RBTreeNode<T> *pivot)
+{
+    pivot->rotate_right();
+    if (!pivot->parent->parent)
+        m_root = pivot->parent;
+}
+
+template <typename T>
 void RBTree<T>::m_fix_after_add(RBTreeNode<T> *node)
 {
     if (!node)
@@ -121,13 +135,13 @@ void RBTree<T>::m_fix_after_add(RBTreeNode<T> *node)
             } else {
                 if (node == p->right) {
                     node = p;
-                    node->rotate_left();
+                    m_rotate_left(node);
                     p = node->parent;
                 }
 
                 p->color = black;
                 g->color = red;
-                g->rotate_right();
+                m_rotate_right(g);
                 if (m_root == g)
                     m_root = p;
             }
@@ -141,13 +155,13 @@ void RBTree<T>::m_fix_after_add(RBTreeNode<T> *node)
             } else {
                 if (node == p->left) {
                     node = p;
-                    node->rotate_right();
+                    m_rotate_right(node);
                     p = node->parent;
                 }
 
                 p->color = black;
                 g->color = red;
-                g->rotate_left();
+                m_rotate_left(g);
                 if (m_root == g)
                     m_root = p;
             }
@@ -171,7 +185,7 @@ void RBTree<T>::m_fix_after_remove(RBTreeNode<T> *node, RBTreeNode<T> *parent)
             if (b->color == red) {
                 b->color = black;
                 p->color = red;
-                p->rotate_left();
+                m_rotate_left(p);
                 b = p->right;
             }
             if (IS_BLACK(b->left) && IS_BLACK(b->right)) {
@@ -181,13 +195,13 @@ void RBTree<T>::m_fix_after_remove(RBTreeNode<T> *node, RBTreeNode<T> *parent)
                 if (IS_BLACK(b->right)) {
                     b->color = red;
                     b->left->color = black;
-                    b->rotate_right();
+                    m_rotate_right(b);
                     b = p->right;
                 }
                 b->color = p->color;
                 p->color = black;
                 b->right->color = black;
-                p->rotate_left();
+                m_rotate_left(p);
                 node = m_root;
             }
         } else {
@@ -195,7 +209,7 @@ void RBTree<T>::m_fix_after_remove(RBTreeNode<T> *node, RBTreeNode<T> *parent)
             if (b->color == red) {
                 b->color = black;
                 p->color = red;
-                p->rotate_right();
+                m_rotate_right(p);
                 b = p->left;
             }
             if (IS_BLACK(b->left) && IS_BLACK(b->right)) {
@@ -205,13 +219,13 @@ void RBTree<T>::m_fix_after_remove(RBTreeNode<T> *node, RBTreeNode<T> *parent)
                 if (IS_BLACK(b->left)) {
                     b->color = red;
                     b->right->color = black;
-                    b->rotate_left();
+                    m_rotate_left(b);
                     b = p->left;
                 }
                 b->color = p->color;
                 p->color = black;
                 b->left->color = black;
-                p->rotate_right();
+                m_rotate_right(p);
                 node = m_root;
             }
         }

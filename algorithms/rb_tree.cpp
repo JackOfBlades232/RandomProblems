@@ -259,6 +259,7 @@ void RBTree<T>::m_remove_one_child(RBTreeNode<T> **nodep)
     }
 
     *nodep = next;
+    free(node);
 }
 
 template <typename T>

@@ -15,22 +15,6 @@ begin
 	tree.root := nil
 end;
 
-procedure FreeTree(node: LongNodePtr); forward;
-procedure PTreeDeinit(var tree: TreeOfLongints);
-begin
-    FreeTree(tree.root);
-    tree.root := nil
-end;
-
-procedure FreeTree(node: LongNodePtr);
-begin
-    if node = nil then
-        exit;
-    FreeTree(node^.left);
-    FreeTree(node^.right);
-    dispose(node)
-end;
-
 function SearchTree(node: LongNodePtr; data: longint): boolean; forward;
 function PTreeSearch(var tree: TreeOfLongints; data: longint): boolean;
 begin
@@ -55,6 +39,8 @@ var
     NewPos: LongNodePos;
 begin
     ok := false;
+    if SearchTree(tree.root, data) then
+        exit;
     PTreeInit(NewTree);
     node := tree.root;
     NewPos := @NewTree.root;
@@ -68,12 +54,7 @@ begin
 
         write(node^.data, ' ');
 
-        if data = node^.data then
-        begin
-            PTreeDeinit(NewTree);
-            exit
-        end
-        else if data < node^.data then
+        if data < node^.data then
         begin
             NewPos^^.right := node^.right;
             NewPos := @NewPos^^.left;
@@ -142,7 +123,8 @@ begin
         writeln('Version ', i, ':');
         PTreePrint(TreeVersions[i]);
         writeln
-    end;
-    PTreeDeinit(TreeVersions[VersionIdx]); { Only delete the max version }
+    end
+    { No freeing, since it is a non-trivial and a separate problem
+      for such trees }
 end.
 
